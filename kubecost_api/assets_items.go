@@ -2,8 +2,6 @@ package kubecost_api
 
 import "time"
 
-
-
 // Cloud assets api with type "Disk"
 type CloudAssetDisk struct {
 	Type       string `json:"type"`
@@ -13,7 +11,7 @@ type CloudAssetDisk struct {
 		Cluster  string `json:"cluster"`
 		Name     string `json:"name"`
 	} `json:"properties"`
-	Labels interface {
+	Labels map[string]interface {
 	} `json:"labels"`
 	Window struct {
 		Start time.Time `json:"start"`
@@ -45,8 +43,7 @@ type CloudAssetOther struct {
 		Name       string `json:"name"`
 		ProviderID string `json:"providerID"`
 	} `json:"properties"`
-	Labels interface {
-	} `json:"labels"`
+	Labels map[string]interface {} `json:"labels"`
 	Window struct {
 		Start time.Time `json:"start"`
 		End   time.Time `json:"end"`

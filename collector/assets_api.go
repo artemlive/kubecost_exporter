@@ -10,10 +10,26 @@ import (
 	"net/url"
 )
 
-const (
-	// Scrape query.
-	assetsEndpoint = "model/assets"
+type CloudAssets struct {
+	Cloud []kubecost_api.CloudAssetOther
+	Disk  []kubecost_api.CloudAssetDisk
+}
 
+func NewCloudAssets() *CloudAssets{
+	return &CloudAssets{
+		Cloud: []kubecost_api.CloudAssetOther{},
+		Disk: []kubecost_api.CloudAssetDisk{},
+	}
+}
+func (c *CloudAssets) GetDisks() *[]kubecost_api.CloudAssetDisk {
+	return &c.Disk
+}
+
+func (c *CloudAssets) AddDisk(disk kubecost_api.CloudAssetDisk)  {
+	c.Disk = append(c.Disk, disk)
+}
+
+const (
 	// Subsystem.
 	scrapeAssetsSubsystemName = "scrape_assets"
 )
@@ -29,13 +45,13 @@ func (ScrapeAssets) Help() string {
 }
 
 func (ScrapeAssets) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger) error {
-	level.Info(logger).Log("msg", scrapeAssetsSubsystemName, "scraperParams", fmt.Sprintf("%+v, len(%d)", scraperParams, len(scraperParams)))
+	level.Debug(logger).Log("msg", scrapeAssetsSubsystemName, "scraperParams", fmt.Sprintf("%+v, len(%d)", scraperParams, len(scraperParams)))
 	apiClient := kubecost_api.NewApiClient(*apiBaseUrl, namespace)
 	assets, err := apiClient.ListAssets(scraperParams)
+	level.Debug(logger).Log("msg", fmt.Sprintf("%+v", assets))
 	if err != nil {
 		return err
 	}
 
-	level.Debug(logger).Log("msg", "%+v", assets)
 	return nil
 }

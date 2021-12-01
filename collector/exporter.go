@@ -38,23 +38,23 @@ var _ prometheus.Collector = (*Exporter)(nil)
 // Exporter collects KubeCost metrics. It implements prometheus.Collector.
 // TODO: we may add some additional configuration like basicAuth or some advanced configs instead of just apiDomain string
 type Exporter struct {
-	ctx       context.Context
-	logger    log.Logger
-	apiUrl 	  **url.URL
-	scrapers  []Scraper
+	ctx            context.Context
+	logger         log.Logger
+	apiUrl         **url.URL
+	scrapers       []Scraper
 	scrapersParams map[string][]string
-	metrics   Metrics
+	metrics        Metrics
 }
 
 // New returns a new KubeCost exporter for the provided apiDomain.
-func New(ctx context.Context, apiBaseUrl **url.URL, metrics Metrics, scrapers []Scraper, scrapersParams map[string][]string , logger log.Logger) *Exporter {
+func New(ctx context.Context, apiBaseUrl **url.URL, metrics Metrics, scrapers []Scraper, scrapersParams map[string][]string, logger log.Logger) *Exporter {
 	return &Exporter{
-		ctx:       ctx,
-		logger:    logger,
-		apiUrl: apiBaseUrl,
-		scrapers:  scrapers,
+		ctx:            ctx,
+		logger:         logger,
+		apiUrl:         apiBaseUrl,
+		scrapers:       scrapers,
 		scrapersParams: scrapersParams,
-		metrics:   metrics,
+		metrics:        metrics,
 	}
 }
 

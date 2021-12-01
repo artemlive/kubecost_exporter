@@ -3,7 +3,6 @@ package kubecost_api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -19,31 +18,31 @@ type Client struct {
 
 const ListAssetsURI = "model/assets"
 
-type AssetItem struct {
-
+type AssetItem interface {
 }
 
-func NewApiClient(apiUrl *url.URL, userAgent string) *Client{
+func NewApiClient(apiUrl *url.URL, userAgent string) *Client {
 	return &Client{
-		BaseURL: apiUrl,
-		UserAgent: userAgent,
+		BaseURL:    apiUrl,
+		UserAgent:  userAgent,
 		httpClient: new(http.Client),
 	}
 
 }
 
-func (c *Client) ListAssets(extraQueryParams []string) ([]AssetItem, error) {
-	req, err := c.newRequest("GET", fmt.Sprintf("/%s?%s", ListAssetsURI, strings.Join(extraQueryParams, "&")), nil)
+func (c *Client) ListAssets(extraQueryParams []string) (AssetItem, error) {
+	req, err := c.newRequest("GET", ListAssetsURI, strings.Join(extraQueryParams, "&"), nil)
 	if err != nil {
 		return nil, err
 	}
-	var users []AssetItem
-	_, err = c.do(req, &users)
-	return users, err
+	var assets AssetItem
+	_, err = c.do(req, &assets)
+	return assets, err
 }
-func (c *Client) newRequest(method, path string, body interface{}) (*http.Request, error) {
-	rel := &url.URL{Path: path}
-	u := c.BaseURL.ResolveReference(rel)
+
+func (c *Client) newRequest(method, path string, query string, body interface{}) (*http.Request, error) {
+	c.BaseURL.Path = path
+	c.BaseURL.RawQuery = query
 	var buf io.ReadWriter
 	if body != nil {
 		buf = new(bytes.Buffer)
@@ -52,7 +51,7 @@ func (c *Client) newRequest(method, path string, body interface{}) (*http.Reques
 			return nil, err
 		}
 	}
-	req, err := http.NewRequest(method, u.String(), buf)
+	req, err := http.NewRequest(method, c.BaseURL.String(), buf)
 	if err != nil {
 		return nil, err
 	}

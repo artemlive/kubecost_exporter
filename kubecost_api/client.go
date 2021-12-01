@@ -18,8 +18,6 @@ type Client struct {
 
 const ListAssetsURI = "model/assets"
 
-type AssetItem interface {
-}
 
 func NewApiClient(apiUrl *url.URL, userAgent string) *Client {
 	return &Client{
@@ -27,15 +25,16 @@ func NewApiClient(apiUrl *url.URL, userAgent string) *Client {
 		UserAgent:  userAgent,
 		httpClient: new(http.Client),
 	}
-
 }
 
-func (c *Client) ListAssets(extraQueryParams []string) (AssetItem, error) {
+// This method returns interface, because the /model/assets endpoint returns array of different objects
+// that can't be mapped here
+func (c *Client) ListAssets(extraQueryParams []string) (interface{}, error) {
 	req, err := c.newRequest("GET", ListAssetsURI, strings.Join(extraQueryParams, "&"), nil)
 	if err != nil {
 		return nil, err
 	}
-	var assets AssetItem
+	var assets interface{}
 	_, err = c.do(req, &assets)
 	return assets, err
 }

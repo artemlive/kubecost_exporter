@@ -20,7 +20,7 @@ const (
 
 const (
 	// Exporter namespace.
-	namespace = "kubecost"
+	namespace = "assets"
 )
 
 // Metric descriptors.

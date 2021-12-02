@@ -18,7 +18,6 @@ type Client struct {
 
 const ListAssetsURI = "model/assets"
 
-
 func NewApiClient(apiUrl *url.URL, userAgent string) *Client {
 	return &Client{
 		BaseURL:    apiUrl,

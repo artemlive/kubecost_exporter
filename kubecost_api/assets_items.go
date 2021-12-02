@@ -43,7 +43,7 @@ type CloudAssetOther struct {
 		Name       string `json:"name"`
 		ProviderID string `json:"providerID"`
 	} `json:"properties"`
-	Labels map[string]interface {} `json:"labels"`
+	Labels map[string]interface{} `json:"labels"`
 	Window struct {
 		Start time.Time `json:"start"`
 		End   time.Time `json:"end"`

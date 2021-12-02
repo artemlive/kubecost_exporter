@@ -70,7 +70,8 @@ type CloudAssetCloud struct {
 	TotalCost  float64          `json:"totalCost"`
 }
 
-type Node struct {
+type CloudAssetNode struct {
+	Type       string           `json:"type"`
 	Properties   *AssetProperties `json:"properties"`
 	Labels       AssetLabels      `json:"labels"`
 	Start        time.Time        `json:"start"`

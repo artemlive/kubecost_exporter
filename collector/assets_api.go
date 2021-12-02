@@ -14,104 +14,18 @@ import (
 
 type CloudAssets struct {
 	logger log.Logger
-	Cloud  []kubecost_api.CloudAssetCloud
-	Disk   []kubecost_api.CloudAssetDisk
+	cloud  []kubecost_api.CloudAssetCloud
+	disk   []kubecost_api.CloudAssetDisk
+	node   []kubecost_api.CloudAssetNode
 }
 
-type CloudAssetsPropertiesToPrometheus map[string]string
-
-func NewCloudAssets(logger log.Logger) *CloudAssets {
-	return &CloudAssets{
-		logger: logger,
-		Cloud:  []kubecost_api.CloudAssetCloud{},
-		Disk:   []kubecost_api.CloudAssetDisk{},
-	}
-}
-func (c *CloudAssets) GetDisks() *[]kubecost_api.CloudAssetDisk {
-	return &c.Disk
-}
-
-func (c *CloudAssets) AddDisk(disk kubecost_api.CloudAssetDisk) {
-	level.Debug(c.logger).Log("AddDisk", fmt.Sprintf("%+v", disk))
-	c.Disk = append(c.Disk, disk)
-}
-
-func (c *CloudAssets) AddCloud(cloud kubecost_api.CloudAssetCloud) {
-	level.Debug(c.logger).Log("AddCloud", fmt.Sprintf("%+v", cloud))
-	c.Cloud = append(c.Cloud, cloud)
-}
-
-const (
-	// Subsystem for logging.
-	scrapeAssetsSubsystemName = "scrape_assets"
-	// Subsystem for exporter metrics
-	promDescSubsystem = "cost"
-)
-
-type ScrapeAssets struct{}
-
-func (ScrapeAssets) Name() string {
-	return scrapeAssetsSubsystemName
-}
-
-func (ScrapeAssets) Help() string {
-	return "Scrapes the information about Assets API"
-}
-
-func (ScrapeAssets) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger) error {
-	level.Debug(logger).Log("msg", scrapeAssetsSubsystemName, "scraperParams", fmt.Sprintf("%+v, len(%d)", scraperParams, len(scraperParams)))
-	apiClient := kubecost_api.NewApiClient(*apiBaseUrl, namespace)
-	// to avoid duplication
-	// if don't use accumulate, it would duplicate resources usage for multiple time windows
-	scraperParams = append(scraperParams, "accumulate=true")
-	assets, err := apiClient.ListAssets(scraperParams)
-	if err != nil {
-		return err
-	}
-	cloudAssetsMapper := NewCloudAssets(logger)
-	err = cloudAssetsMapper.MapAssets(assets)
-
-	// Generate metrics for Disks
-	// TODO: move that to another function
-	disks := *cloudAssetsMapper.GetDisks()
-
-	if len(disks) > 0 {
-		for _, disk := range disks {
-			// maybe this is not the best idea to cast asset -> interface -> asset
-			// TODO: refactor this to use common interface for all cloud assets
-			labelNames, labelValues, err := cloudAssetsMapper.GetDefaultLabelsFromAssets(disk)
-			if err != nil {
-				return err
-			}
-			diskDesc := prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, promDescSubsystem, "total"),
-				"Disk total cost from Kubecost Assets API",
-				labelNames, nil,
-			)
-			ch <- prometheus.MustNewConstMetric(
-				diskDesc, prometheus.GaugeValue, disk.TotalCost, labelValues...,
-			)
-		}
-	}
-
-	return err
-}
-
-//type AssetProperties struct {
-//	Category   string `json:"category,omitempty"`
-//	Provider   string `json:"provider,omitempty"`
-//	Account    string `json:"account,omitempty"`
-//	Project    string `json:"project,omitempty"`
-//	Service    string `json:"service,omitempty"`
-//	Cluster    string `json:"cluster,omitempty"`
-//	Name       string `json:"name,omitempty"`
-//	ProviderID string `json:"providerID,omitempty"`
-//}
 
 // Sets and return the default labels set for each assets
+// TODO: refactor common code to a separate function after POC testing
 func (c *CloudAssets) GetDefaultLabelsFromAssets(asset interface{}) ([]string, []string, error) {
 	switch asset.(type) {
 	case kubecost_api.CloudAssetDisk:
+		// TODO: move this to sub functions
 		disk, ok := asset.(kubecost_api.CloudAssetDisk)
 		if !ok {
 			fmt.Errorf("couldn't cast interface to CloudAssetDisk: %+v", asset)
@@ -128,7 +42,44 @@ func (c *CloudAssets) GetDefaultLabelsFromAssets(asset interface{}) ([]string, [
 		outLabels := append(diskLabels, labels...)
 		outValues := append(diskLabelsValues, labelsVals...)
 		return outLabels, outValues, err
+
+	case kubecost_api.CloudAssetCloud:
+		cloud, ok := asset.(kubecost_api.CloudAssetCloud)
+		if !ok {
+			fmt.Errorf("couldn't cast interface to CloudAssetCloud: %+v", asset)
+		}
+		labels, labelsVals, err := c.getLabelsFromAsset(cloud.Labels)
+		if err != nil {
+			return []string{}, []string{}, err
+		}
+		// we have to create values list according to the defaultDiskLabels
+		propertiesLabels, propertiesLabelsVals := c.getEnabledProperties(cloud.Properties)
+		cloudLabels := append(propertiesLabels, "type")
+		cloudLabelsValues := append(propertiesLabelsVals, cloud.Type)
+		// concat array of properties labels/values with actual labels/values
+		outLabels := append(cloudLabels, labels...)
+		outValues := append(cloudLabelsValues, labelsVals...)
+		return outLabels, outValues, err
+
+	case kubecost_api.CloudAssetNode:
+		node, ok := asset.(kubecost_api.CloudAssetNode)
+		if !ok {
+			fmt.Errorf("couldn't cast interface to CloudAssetNode: %+v", asset)
+		}
+		labels, labelsVals, err := c.getLabelsFromAsset(node.Labels)
+		if err != nil {
+			return []string{}, []string{}, err
+		}
+		// we have to create values list according to the defaultDiskLabels
+		propertiesLabels, propertiesLabelsVals := c.getEnabledProperties(node.Properties)
+		cloudLabels := append(propertiesLabels, "type")
+		cloudLabelsValues := append(propertiesLabelsVals, node.Type)
+		// concat array of properties labels/values with actual labels/values
+		outLabels := append(cloudLabels, labels...)
+		outValues := append(cloudLabelsValues, labelsVals...)
+		return outLabels, outValues, err
 	}
+
 	return []string{}, []string{}, nil
 }
 
@@ -233,6 +184,10 @@ func (c *CloudAssets) addAccordingType(asset map[string]interface{}) error {
 	switch valType {
 	case "Disk":
 		c.AddDiskFromMap(asset)
+	case "Cloud":
+		c.AddCloudFromMap(asset)
+	case "Node":
+		c.AddNodeFromMap(asset)
 	}
 	return nil
 }
@@ -267,4 +222,171 @@ func (c *CloudAssets) AddCloudFromMap(asset map[string]interface{}) error {
 	err = json.Unmarshal(jsonStr, &cloud)
 	c.AddCloud(cloud)
 	return err
+}
+
+func (c *CloudAssets) AddNodeFromMap(asset map[string]interface{}) error {
+	node := kubecost_api.CloudAssetNode{}
+	// convert json to struct
+	// Convert map to json string
+	jsonStr, err := json.Marshal(asset)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(jsonStr, &node)
+	c.AddNode(node)
+	return err
+}
+
+
+func NewCloudAssets(logger log.Logger) *CloudAssets {
+	return &CloudAssets{
+		logger: logger,
+		cloud:  []kubecost_api.CloudAssetCloud{},
+		disk:   []kubecost_api.CloudAssetDisk{},
+		node:   []kubecost_api.CloudAssetNode{},
+	}
+}
+func (c *CloudAssets) GetDisks() *[]kubecost_api.CloudAssetDisk {
+	return &c.disk
+}
+
+func (c *CloudAssets) GetClouds() *[]kubecost_api.CloudAssetCloud{
+	return &c.cloud
+}
+
+func (c *CloudAssets) GetNodes() *[]kubecost_api.CloudAssetNode{
+	return &c.node
+}
+
+
+func (c *CloudAssets) AddDisk(disk kubecost_api.CloudAssetDisk) {
+	level.Debug(c.logger).Log("AddDisk", fmt.Sprintf("%+v", disk))
+	c.disk = append(c.disk, disk)
+}
+
+func (c *CloudAssets) AddCloud(cloud kubecost_api.CloudAssetCloud) {
+	level.Debug(c.logger).Log("AddCloud", fmt.Sprintf("%+v", cloud))
+	c.cloud = append(c.cloud, cloud)
+}
+
+func (c *CloudAssets) AddNode(node kubecost_api.CloudAssetNode) {
+	level.Debug(c.logger).Log("AddNode", fmt.Sprintf("%+v", node))
+	c.node = append(c.node, node)
+}
+const (
+	// Subsystem for logging.
+	scrapeAssetsSubsystemName = "scrape_assets"
+	// Subsystem for exporter metrics
+	promDescSubsystem = "cost"
+)
+
+type ScrapeAssets struct{}
+
+func (ScrapeAssets) Name() string {
+	return scrapeAssetsSubsystemName
+}
+
+func (ScrapeAssets) Help() string {
+	return "Scrapes the information about Assets API"
+}
+
+func (s ScrapeAssets) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger) error {
+	level.Debug(logger).Log("msg", scrapeAssetsSubsystemName, "scraperParams", fmt.Sprintf("%+v, len(%d)", scraperParams, len(scraperParams)))
+	apiClient := kubecost_api.NewApiClient(*apiBaseUrl, namespace)
+	// to avoid duplication
+	// if don't use accumulate, it would duplicate resources usage for multiple time windows
+	scraperParams = append(scraperParams, "accumulate=true")
+	assets, err := apiClient.ListAssets(scraperParams)
+	if err != nil {
+		return err
+	}
+	cloudAssetsMapper := NewCloudAssets(logger)
+	err = cloudAssetsMapper.MapAssets(assets)
+
+	// Generate metrics for Disks
+	err = s.generateDisksMetrics(cloudAssetsMapper.GetDisks(),cloudAssetsMapper, ch, logger)
+	if err != nil {
+		return err
+	}
+
+	// Generate metrics for Clouds
+	err = s.generateCloudMetrics(cloudAssetsMapper.GetClouds(),cloudAssetsMapper, ch, logger)
+	if err != nil {
+		return err
+	}
+
+	// Generate metrics for Clouds
+	err = s.generateNodeMetrics(cloudAssetsMapper.GetNodes(),cloudAssetsMapper, ch, logger)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+// I know that all functions repeat same code, I'll refactor it a bit later
+// TODO: move all common code to a separate function
+func (ScrapeAssets) generateDisksMetrics(disks *[]kubecost_api.CloudAssetDisk, assetsMapper *CloudAssets, ch chan<- prometheus.Metric, logger log.Logger) error {
+	if len(*disks) > 0 {
+		for _, disk := range *disks {
+			// maybe this is not the best idea to cast asset -> interface -> asset
+			// TODO: refactor this to use common interface for all cloud assets
+			labelNames, labelValues, err := assetsMapper.GetDefaultLabelsFromAssets(disk)
+			if err != nil {
+				return err
+			}
+			diskDesc := prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, promDescSubsystem, "total"),
+				"Assets total cost from Kubecost Assets API",
+				labelNames, nil,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				diskDesc, prometheus.GaugeValue, disk.TotalCost, labelValues...,
+			)
+		}
+	}
+	return nil
+}
+
+func (ScrapeAssets) generateCloudMetrics(clouds *[]kubecost_api.CloudAssetCloud, assetsMapper *CloudAssets, ch chan<- prometheus.Metric, logger log.Logger) error {
+	if len(*clouds) > 0 {
+		for _, cloud := range *clouds {
+			// maybe this is not the best idea to cast asset -> interface -> asset
+			// TODO: refactor this to use common interface for all cloud assets
+			labelNames, labelValues, err := assetsMapper.GetDefaultLabelsFromAssets(cloud)
+			if err != nil {
+				return err
+			}
+			diskDesc := prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, promDescSubsystem, "total"),
+				"Assets total cost from Kubecost Assets API",
+				labelNames, nil,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				diskDesc, prometheus.GaugeValue, cloud.TotalCost, labelValues...,
+			)
+		}
+	}
+	return nil
+}
+
+func (ScrapeAssets) generateNodeMetrics(nodes *[]kubecost_api.CloudAssetNode, assetsMapper *CloudAssets, ch chan<- prometheus.Metric, logger log.Logger) error {
+	if len(*nodes) > 0 {
+		for _, node := range *nodes {
+			// maybe this is not the best idea to cast asset -> interface -> asset
+			// TODO: refactor this to use common interface for all cloud assets
+			labelNames, labelValues, err := assetsMapper.GetDefaultLabelsFromAssets(node)
+			if err != nil {
+				return err
+			}
+			diskDesc := prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, promDescSubsystem, "total"),
+				"Assets total cost from Kubecost Assets API",
+				labelNames, nil,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				diskDesc, prometheus.GaugeValue, node.TotalCost, labelValues...,
+			)
+		}
+	}
+	return nil
 }

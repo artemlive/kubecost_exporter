@@ -20,16 +20,27 @@ type Breakdown struct {
 	User   float64 `json:"user"`
 }
 
-type LoadBalancer struct {
-	Properties *AssetProperties
-	Labels     AssetLabels
-	Start      time.Time
-	End        time.Time
-	Window     Window
-	Adjustment float64
-	Cost       float64
+type CloudAssetLoadBalancer struct {
+	Type       string           `json:"type"`
+	Properties *AssetProperties `json:"properties"`
+	Labels     AssetLabels      `json:"labels"`
+	Start      time.Time        `json:"start"`
+	End        time.Time        `json:"end"`
+	Window     Window           `json:"window"`
+	Minutes    int              `json:"minutes"`
+	Adjustment float64          `json:"adjustment"`
+	TotalCost  float64          `json:"totalCost"`
 }
 
+type CloudAssetClusterManagement struct {
+	Type       string           `json:"type"`
+	Labels     AssetLabels      `json:"labels"`
+	Properties *AssetProperties `json:"properties"`
+	Window     Window           `json:"window"`
+	Minutes    int              `json:"minutes"`
+	Adjustment float64          `json:"adjustment"`
+	TotalCost  float64          `json:"totalCost"`
+}
 type AssetProperties struct {
 	Category   string `json:"category,omitempty"`
 	Provider   string `json:"provider,omitempty"`
@@ -71,7 +82,7 @@ type CloudAssetCloud struct {
 }
 
 type CloudAssetNode struct {
-	Type       string           `json:"type"`
+	Type         string           `json:"type"`
 	Properties   *AssetProperties `json:"properties"`
 	Labels       AssetLabels      `json:"labels"`
 	Start        time.Time        `json:"start"`

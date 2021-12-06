@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/artemlive/kubecost_exporter/collector"
+	"github.com/artemlive/kubecost_exporter/version"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
-	"github.com/prometheus/common/version"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	"os"
@@ -29,7 +29,7 @@ var (
 		"tls.insecure-skip-verify",
 		"Ignore certificate and server verification when using a tls connection.",
 	).Bool()
-	kubecostUrl = kingpin.Flag("kubecost.baseUrl", "KubeCost base URL with schema: https://kubecost.example.com").Required().URL()
+	kubecostUrl = kingpin.Flag("kubecost.baseUrl", "KubeCost base URL with schema: https://kubecost.example.com").Required().Envar("KUBECOST_URL").URL()
 )
 
 // scrapers lists all possible collection methods and if they should be enabled by default.

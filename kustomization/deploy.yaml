@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubecost-exporter
+  labels:
+    app: kubecost-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubecost-exporter
+  template:
+    metadata:
+      labels:
+        app: kubecost-exporter
+    spec:
+      containers:
+        - name: kubecost-exporter
+          image: kubecost-exporter:0.0.1
+          ports:
+            - containerPort: 9050

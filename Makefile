@@ -8,10 +8,17 @@ GO_VERSION        ?= $(shell $(GO) version)
 GO_VERSION_NUMBER ?= $(word 3, $(GO_VERSION))
 
 VERSION=0.0.1
-BUILD=$(date +%FT%T%z`)
+BUILD_DATE=$(shell date +%FT%T%z)
+USER=$(shell whoami)
+BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+REVISION=$(shell git rev-list --count HEAD)
 
 # Setup the -ldflags option for go build here, interpolate the variable values
-LDFLAGS =-ldflags "-w -s -X github.com/${REPO_OWNER}/kubecost-exporter/version.Version=${VERSION} -X github.com/${REPO_OWNER}/kubecost-exporter/version.BUILD=${BUILD}"
+LDFLAGS =-ldflags "-w -s -X github.com/${REPO_OWNER}/kubecost_exporter/version.Version=${VERSION} \
+ -X github.com/${REPO_OWNER}/kubecost_exporter/version.BuildDate=${BUILD_DATE} \
+ -X github.com/${REPO_OWNER}/kubecost_exporter/version.BuildUser=${USER} \
+ -X github.com/${REPO_OWNER}/kubecost_exporter/version.Branch=${BRANCH} \
+ -X github.com/${REPO_OWNER}/kubecost_exporter/version.Revision=${REVISION}"
 
 test:
 	@echo "${TEST}"

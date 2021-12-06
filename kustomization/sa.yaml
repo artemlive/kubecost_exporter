@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubecost-exporter
+  namespace: kubecost-exporter
+  labels:
+    k8s-app: kubecost-exporter

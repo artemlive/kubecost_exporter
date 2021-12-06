@@ -15,6 +15,7 @@ RUN make build
 FROM golang:1.17-alpine as deploy
 
 RUN apk add bash && addgroup -S nonroot && adduser -s /bin/bash nonroot -G nonroot -D
+
 ENV KUBECOST_URL="http://kubecost.example.com"
 
 WORKDIR /app

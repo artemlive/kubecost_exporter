@@ -1,0 +1,30 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kubecost-exporter
+  namespace: kubecost-exporter
+  labels:
+    app: kubecost-exporter
+spec:
+  selector:
+    app: kubecost-exporter
+  ports:
+    - name: metrics
+      port: 9050
+
+---
+kind: ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+metadata:
+  name: kubecost-exporter
+  namespace: kubecost-exporter
+  labels:
+    release: prometheus-operator
+spec:
+  selector:
+    matchLabels:
+      app: kubecost-exporter
+  endpoints:
+    - port: metrics
+      interval: 60s

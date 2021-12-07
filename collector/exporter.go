@@ -119,24 +119,24 @@ func NewMetrics() Metrics {
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "scrapes_total",
-			Help:      "Total number of times MySQL was scraped for metrics.",
+			Help:      "Total number of times KubeCost was scraped for metrics.",
 		}),
 		ScrapeErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "scrape_errors_total",
-			Help:      "Total number of times an error occurred scraping a MySQL.",
+			Help:      "Total number of times an error occurred scraping a KubeCost.",
 		}, []string{"collector"}),
 		Error: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "last_scrape_error",
-			Help:      "Whether the last scrape of metrics from MySQL resulted in an error (1 for error, 0 for success).",
+			Help:      "Whether the last scrape of metrics from KubeCost resulted in an error (1 for error, 0 for success).",
 		}),
 		KubeCostUp: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Name:      "up",
-			Help:      "Whether the MySQL server is up.",
+			Help:      "Whether the KubeCost server is up.",
 		}),
 	}
 }

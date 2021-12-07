@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default
+  namespace: kubecost-exporter
+spec:
+  ingress:
+  - from:
+    - podSelector: {}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: prometheus
+      podSelector: {}
+  podSelector: {}
+  policyTypes:
+  - Ingress

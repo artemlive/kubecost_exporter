@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kubecost-exporter
+  namespace: kubecost-exporter
   labels:
     app: kubecost-exporter
 spec:
@@ -14,8 +15,11 @@ spec:
       labels:
         app: kubecost-exporter
     spec:
+      serviceAccountName: kubecost-exporter
       containers:
         - name: kubecost-exporter
-          image: kubecost-exporter:0.0.1
+          image: kubecost-exporter:0.0.2-alpha
           ports:
-            - containerPort: 9050
+            - containerPort: 9150
+              name: metrics
+              protocol: TCP

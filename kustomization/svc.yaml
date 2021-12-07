@@ -11,7 +11,7 @@ spec:
     app: kubecost-exporter
   ports:
     - name: metrics
-      port: 9050
+      port: 9150
 
 ---
 kind: ServiceMonitor
@@ -28,3 +28,8 @@ spec:
   endpoints:
     - port: metrics
       interval: 60s
+      params:
+        collect[]:
+          - scrape_assets
+        scrape_assets[]:
+          - window=7d

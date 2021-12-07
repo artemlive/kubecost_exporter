@@ -7,7 +7,7 @@ GOFMT        ?= $(GO)fmt
 GO_VERSION        ?= $(shell $(GO) version)
 GO_VERSION_NUMBER ?= $(word 3, $(GO_VERSION))
 
-VERSION=0.0.1
+VERSION=0.0.2-alpha
 BUILD_DATE=$(shell date +%FT%T%z)
 USER=$(shell whoami)
 BRANCH=$(shell git rev-parse --abbrev-ref HEAD)

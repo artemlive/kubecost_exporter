@@ -3,5 +3,6 @@ kind: Kustomization
 resources:
   - ns.yaml
   - sa.yaml
+  - networkpolicy.yaml
   - deploy.yaml
   - svc.yaml

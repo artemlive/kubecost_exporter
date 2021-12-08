@@ -27,9 +27,9 @@ func (ScrapeAssets) Help() string {
 	return "Scrapes the information about Assets API"
 }
 
-func (s ScrapeAssets) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger) error {
+func (s ScrapeAssets) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger, skipTLSVerify bool) error {
 	level.Debug(logger).Log("msg", scrapeAssetsSubsystemName, "scraperParams", fmt.Sprintf("%+v, len(%d)", scraperParams, len(scraperParams)))
-	apiClient := kubecost_api.NewApiClient(*apiBaseUrl, namespace)
+	apiClient := kubecost_api.NewApiClient(*apiBaseUrl, namespace, skipTLSVerify)
 	// to avoid duplication
 	// if don't use accumulate, it would duplicate resources usage for multiple time windows
 	scraperParams = append(scraperParams, "accumulate=true")

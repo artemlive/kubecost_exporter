@@ -43,10 +43,11 @@ type Exporter struct {
 	scrapers       []Scraper
 	scrapersParams map[string][]string
 	metrics        Metrics
+	skipTLSVerify  bool
 }
 
 // New returns a new KubeCost exporter for the provided apiDomain.
-func New(ctx context.Context, apiBaseUrl **url.URL, metrics Metrics, scrapers []Scraper, scrapersParams map[string][]string, logger log.Logger) *Exporter {
+func New(ctx context.Context, apiBaseUrl **url.URL, metrics Metrics, scrapers []Scraper, scrapersParams map[string][]string, logger log.Logger, skipTLSVerify bool) *Exporter {
 	return &Exporter{
 		ctx:            ctx,
 		logger:         logger,
@@ -54,6 +55,7 @@ func New(ctx context.Context, apiBaseUrl **url.URL, metrics Metrics, scrapers []
 		scrapers:       scrapers,
 		scrapersParams: scrapersParams,
 		metrics:        metrics,
+		skipTLSVerify: skipTLSVerify,
 	}
 }
 
@@ -93,7 +95,7 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 			defer wg.Done()
 			label := "collect." + scraper.Name()
 			scrapeTime := time.Now()
-			if err := scraper.Scrape(ctx, e.apiUrl, e.scrapersParams[scraper.Name()], ch, log.With(e.logger, "scraper", scraper.Name())); err != nil {
+			if err := scraper.Scrape(ctx, e.apiUrl, e.scrapersParams[scraper.Name()], ch, log.With(e.logger, "scraper", scraper.Name()), e.skipTLSVerify); err != nil {
 				level.Error(e.logger).Log("msg", "Error from scraper", "scraper", scraper.Name(), "err", err)
 				e.metrics.ScrapeErrors.WithLabelValues(label).Inc()
 				e.metrics.Error.Set(1)

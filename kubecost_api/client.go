@@ -2,6 +2,7 @@ package kubecost_api
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -18,7 +19,9 @@ type Client struct {
 
 const ListAssetsURI = "model/assets"
 
-func NewApiClient(apiUrl *url.URL, userAgent string) *Client {
+func NewApiClient(apiUrl *url.URL, userAgent string, skipTLSVerify bool) *Client {
+	// Disable TLS verification globally
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: skipTLSVerify}
 	return &Client{
 		BaseURL:    apiUrl,
 		UserAgent:  userAgent,
@@ -62,6 +65,7 @@ func (c *Client) newRequest(method, path string, query string, body interface{})
 }
 
 func (c *Client) do(req *http.Request, v interface{}) (*http.Response, error) {
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err

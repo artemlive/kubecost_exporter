@@ -72,7 +72,7 @@ func newHandler(metrics collector.Metrics, scrapers []collector.Scraper, logger 
 		}
 
 		registry := prometheus.NewRegistry()
-		registry.MustRegister(collector.New(ctx, kubecostUrl, metrics, filteredScrapers, scrapersParams, logger))
+		registry.MustRegister(collector.New(ctx, kubecostUrl, metrics, filteredScrapers, scrapersParams, logger, *tlsInsecureSkipVerify))
 
 		gatherers := prometheus.Gatherers{
 			prometheus.DefaultGatherer,

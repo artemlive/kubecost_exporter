@@ -18,6 +18,7 @@ type Client struct {
 }
 
 const ListAssetsURI = "model/assets"
+const AllocationURI = "model/allocation"
 
 func NewApiClient(apiUrl *url.URL, userAgent string, skipTLSVerify bool) *Client {
 	// Disable TLS verification globally
@@ -39,6 +40,21 @@ func (c *Client) ListAssets(extraQueryParams []string) (interface{}, error) {
 	var assets interface{}
 	_, err = c.do(req, &assets)
 	return assets, err
+}
+
+// Method for getting information about namespace costs
+// Such a strange response structure: Array with one element, which has a map inside
+func (c *Client) GetAllocation(extraQueryParams []string) (*CostDataResponse, error) {
+	req, err := c.newRequest("GET", AllocationURI, strings.Join(extraQueryParams, "&"), nil)
+	if err != nil {
+		return nil, err
+	}
+	var assets CostDataResponse
+	_, err = c.do(req, &assets)
+	if err != nil {
+		return nil, err
+	}
+	return &assets, err
 }
 
 func (c *Client) newRequest(method, path string, query string, body interface{}) (*http.Request, error) {
@@ -65,7 +81,6 @@ func (c *Client) newRequest(method, path string, query string, body interface{})
 }
 
 func (c *Client) do(req *http.Request, v interface{}) (*http.Response, error) {
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err

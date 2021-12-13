@@ -22,7 +22,7 @@ WORKDIR /app
 
 COPY --from=build /app/bin/kubecost_exporter /usr/local/bin/
 
-ENTRYPOINT /usr/local/bin/kubecost_exporter
+ENTRYPOINT ["/usr/local/bin/kubecost_exporter"]
 EXPOSE 9150
 
 USER nonroot:nonroot

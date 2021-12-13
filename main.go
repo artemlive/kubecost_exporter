@@ -36,6 +36,7 @@ var (
 // Reserved for future use cases, if there will be other endpoints
 var scrapers = map[collector.Scraper]bool{
 	collector.ScrapeAssets{}: true,
+	collector.ScrapeAllocation{}: true,
 }
 
 func newHandler(metrics collector.Metrics, scrapers []collector.Scraper, logger log.Logger) http.HandlerFunc {
@@ -50,7 +51,7 @@ func newHandler(metrics collector.Metrics, scrapers []collector.Scraper, logger 
 		// Check if we have some "collect[]" query parameters.
 		if len(scrapersFilterQuery) > 0 {
 			filters := make(map[string]bool)
-			for _, param := range scrapersFilterQuery {
+			for _, param := range scrapersFilterQuery{
 				filters[param] = true
 			}
 

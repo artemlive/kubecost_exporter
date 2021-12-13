@@ -55,7 +55,7 @@ func New(ctx context.Context, apiBaseUrl **url.URL, metrics Metrics, scrapers []
 		scrapers:       scrapers,
 		scrapersParams: scrapersParams,
 		metrics:        metrics,
-		skipTLSVerify: skipTLSVerify,
+		skipTLSVerify:  skipTLSVerify,
 	}
 }
 

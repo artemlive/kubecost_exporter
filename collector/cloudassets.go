@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/artemlive/kubecost_exporter/kubecost_api"
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	//"github.com/go-kit/log/level"
 	"strings"
 )
 
@@ -19,7 +19,7 @@ type CloudAssets struct {
 }
 
 // we can have different exportable labels for each type
-func (c *CloudAssets) getDefaultLabelsForDisk(disk kubecost_api.CloudAssetDisk) ([]string, []string, error){
+func (c *CloudAssets) getDefaultLabelsForDisk(disk kubecost_api.CloudAssetDisk) ([]string, []string, error) {
 	labels, labelsVals, err := c.getLabelsFromAsset(disk.Labels)
 	if err != nil {
 		return []string{}, []string{}, err
@@ -35,7 +35,7 @@ func (c *CloudAssets) getDefaultLabelsForDisk(disk kubecost_api.CloudAssetDisk) 
 	return outLabels, outValues, err
 }
 
-func (c *CloudAssets) getDefaultLabelsForCloud(cloud kubecost_api.CloudAssetCloud) ([]string, []string, error){
+func (c *CloudAssets) getDefaultLabelsForCloud(cloud kubecost_api.CloudAssetCloud) ([]string, []string, error) {
 	labels, labelsVals, err := c.getLabelsFromAsset(cloud.Labels)
 	if err != nil {
 		return []string{}, []string{}, err
@@ -50,7 +50,7 @@ func (c *CloudAssets) getDefaultLabelsForCloud(cloud kubecost_api.CloudAssetClou
 	return outLabels, outValues, err
 }
 
-func (c *CloudAssets) getDefaultLabelsForNode(node kubecost_api.CloudAssetNode) ([]string, []string, error){
+func (c *CloudAssets) getDefaultLabelsForNode(node kubecost_api.CloudAssetNode) ([]string, []string, error) {
 	labels, labelsVals, err := c.getLabelsFromAsset(node.Labels)
 	if err != nil {
 		return []string{}, []string{}, err
@@ -64,7 +64,7 @@ func (c *CloudAssets) getDefaultLabelsForNode(node kubecost_api.CloudAssetNode) 
 	return outLabels, outValues, err
 }
 
-func (c *CloudAssets) getDefaultLabelsForLoadBalancer(lb kubecost_api.CloudAssetLoadBalancer) ([]string, []string, error){
+func (c *CloudAssets) getDefaultLabelsForLoadBalancer(lb kubecost_api.CloudAssetLoadBalancer) ([]string, []string, error) {
 	labels, labelsVals, err := c.getLabelsFromAsset(lb.Labels)
 	if err != nil {
 		return []string{}, []string{}, err
@@ -79,7 +79,7 @@ func (c *CloudAssets) getDefaultLabelsForLoadBalancer(lb kubecost_api.CloudAsset
 	return outLabels, outValues, err
 }
 
-func (c *CloudAssets) getDefaultLabelsForClusterManagement(cm kubecost_api.CloudAssetClusterManagement) ([]string, []string, error){
+func (c *CloudAssets) getDefaultLabelsForClusterManagement(cm kubecost_api.CloudAssetClusterManagement) ([]string, []string, error) {
 	labels, labelsVals, err := c.getLabelsFromAsset(cm.Labels)
 	if err != nil {
 		return []string{}, []string{}, err
@@ -209,12 +209,12 @@ func (c *CloudAssets) MapAssets(value interface{}) error {
 		for k, v := range value.(map[string]interface{}) {
 			//if key is data, we have to go deeper
 			if k == "data" {
-				level.Debug(c.logger).Log("msg", "structure seems to be correct, keyword 'data' found")
+				//level.Debug(c.logger).Log("msg", "structure seems to be correct, keyword 'data' found")
 				c.MapAssets(v)
 			} else {
 				// according to current structure we get the asset itself
 				// the format is: asset_uniq_key => asset_config interface{}
-				level.Debug(c.logger).Log("msg", fmt.Sprintf("k = %s", k))
+				////level.Debug(c.logger).Log("msg", fmt.Sprintf("k = %s", k))
 				concreteType, ok := v.(map[string]interface{})
 				if ok {
 					if err := c.addAccordingType(concreteType); err != nil {
@@ -347,26 +347,26 @@ func (c *CloudAssets) GetLoadBalancers() *[]kubecost_api.CloudAssetLoadBalancer 
 }
 
 func (c *CloudAssets) AddDisk(disk kubecost_api.CloudAssetDisk) {
-	level.Debug(c.logger).Log("AddDisk", fmt.Sprintf("%+v", disk))
+	//level.Debug(c.logger).Log("AddDisk", fmt.Sprintf("%+v", disk))
 	c.disk = append(c.disk, disk)
 }
 
 func (c *CloudAssets) AddCloud(cloud kubecost_api.CloudAssetCloud) {
-	level.Debug(c.logger).Log("AddCloud", fmt.Sprintf("%+v", cloud))
+	//level.Debug(c.logger).Log("AddCloud", fmt.Sprintf("%+v", cloud))
 	c.cloud = append(c.cloud, cloud)
 }
 
 func (c *CloudAssets) AddNode(node kubecost_api.CloudAssetNode) {
-	level.Debug(c.logger).Log("AddNode", fmt.Sprintf("%+v", node))
+	//level.Debug(c.logger).Log("AddNode", fmt.Sprintf("%+v", node))
 	c.node = append(c.node, node)
 }
 
 func (c *CloudAssets) AddLoadBalancer(lb kubecost_api.CloudAssetLoadBalancer) {
-	level.Debug(c.logger).Log("AddLoadBalancer", fmt.Sprintf("%+v", lb))
+	//level.Debug(c.logger).Log("AddLoadBalancer", fmt.Sprintf("%+v", lb))
 	c.lb = append(c.lb, lb)
 }
 
 func (c *CloudAssets) AddClusterManagement(cm kubecost_api.CloudAssetClusterManagement) {
-	level.Debug(c.logger).Log("AddClusterManagement", fmt.Sprintf("%+v", cm))
+	//level.Debug(c.logger).Log("AddClusterManagement", fmt.Sprintf("%+v", cm))
 	c.cm = append(c.cm, cm)
 }

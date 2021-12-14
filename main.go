@@ -64,7 +64,7 @@ func newHandler(metrics collector.Metrics, scrapers []collector.Scraper, logger 
 					scrapersParamsKey := fmt.Sprintf("%s[]", scraper.Name())
 					scrapersParamsQuery := r.URL.Query()[scrapersParamsKey]
 					if len(scrapersParamsQuery) > 0 {
-						scrapersParams[scraper.Name()] = strings.Split(scrapersParamsQuery[0], ",")
+						scrapersParams[scraper.Name()] = scrapersParamsQuery
 						level.Debug(logger).Log("msg", fmt.Sprintf("%s params query", scrapersParamsKey), "scrapersParamsQuery", strings.Join(scrapersParamsQuery, ","))
 					}
 				}

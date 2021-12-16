@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const (
@@ -28,8 +29,13 @@ func (ScrapeAllocation) Help() string {
 	return "Scrapes the information about Cost Allocation API"
 }
 
-
-func (s ScrapeAllocation) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger, skipTLSVerify bool) error {
+func (s ScrapeAllocation) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger, skipTLSVerify bool, offset int64) error {
+	//2021-12-14T00:00:00Z,2021-12-15T00:00:00Z
+	RFC3339local := "2006-01-02T15:04:05Z"
+	now := time.Now()
+	dateFrom := now.AddDate(0, 0, int(-offset))
+	dateTo := now.AddDate(0, 0, int(-offset+1))
+	scraperParams = append(scraperParams, fmt.Sprintf("window=%s,%s", TruncateDate(dateFrom).Format(RFC3339local), TruncateDate(dateTo).Format(RFC3339local)))
 	scraperParams = append(scraperParams, "accumulate=true")
 	level.Debug(logger).Log("msg", scrapeAllocationSubsystemName, "scraperParams", fmt.Sprintf("%+v, len(%d)", scraperParams, len(scraperParams)))
 	apiClient := kubecost_api.NewApiClient(*apiBaseUrl, namespace, skipTLSVerify)

@@ -16,5 +16,5 @@ type Scraper interface {
 	Help() string
 
 	// Scrape collects data from the KubeCost Assets API and sends it over channel as prometheus metric.
-	Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger, skipTLSVerify bool) error
+	Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger, skipTLSVerify bool, offset int64) error
 }

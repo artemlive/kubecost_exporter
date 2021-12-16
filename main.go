@@ -29,6 +29,7 @@ var (
 		"tls.insecure-skip-verify",
 		"Ignore certificate and server verification when using a tls connection.",
 	).Bool()
+	offsetDays = kingpin.Flag("offset", "Data offset window").Default("2").Int64()
 	kubecostUrl = kingpin.Flag("kubecost.baseUrl", "KubeCost base URL with schema: https://kubecost.example.com").Required().Envar("KUBECOST_URL").URL()
 )
 
@@ -73,7 +74,7 @@ func newHandler(metrics collector.Metrics, scrapers []collector.Scraper, logger 
 		}
 
 		registry := prometheus.NewRegistry()
-		registry.MustRegister(collector.New(ctx, kubecostUrl, metrics, filteredScrapers, scrapersParams, logger, *tlsInsecureSkipVerify))
+		registry.MustRegister(collector.New(ctx, kubecostUrl, metrics, filteredScrapers, scrapersParams, logger, *tlsInsecureSkipVerify, *offsetDays))
 
 		gatherers := prometheus.Gatherers{
 			prometheus.DefaultGatherer,

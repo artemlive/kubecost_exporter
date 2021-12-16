@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/url"
+	"time"
 )
 
 const (
@@ -27,7 +28,18 @@ func (ScrapeAssets) Help() string {
 	return "Scrapes the information about Assets API"
 }
 
-func (s ScrapeAssets) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger, skipTLSVerify bool) error {
+// TODO: move to helpers
+func TruncateDate(t time.Time) time.Time {
+	year, month, day := t.Date()
+	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
+}
+func (s ScrapeAssets) Scrape(ctx context.Context, apiBaseUrl **url.URL, scraperParams []string, ch chan<- prometheus.Metric, logger log.Logger, skipTLSVerify bool, offset int64) error {
+	//2021-12-14T00:00:00Z,2021-12-15T00:00:00Z
+	RFC3339local := "2006-01-02T15:04:05Z"
+	now := time.Now()
+	dateFrom := now.AddDate(0, 0, int(-offset))
+	dateTo := now.AddDate(0, 0, int(-offset+1))
+	scraperParams = append(scraperParams, fmt.Sprintf("window=%s,%s", TruncateDate(dateFrom).Format(RFC3339local), TruncateDate(dateTo).Format(RFC3339local)))
 	level.Debug(logger).Log("msg", scrapeAssetsSubsystemName, "scraperParams", fmt.Sprintf("%+v, len(%d)", scraperParams, len(scraperParams)))
 	apiClient := kubecost_api.NewApiClient(*apiBaseUrl, namespace, skipTLSVerify)
 	// to avoid duplication
@@ -82,6 +94,7 @@ func (ScrapeAssets) generateDisksMetrics(disks *[]kubecost_api.CloudAssetDisk, a
 				"Assets total cost from Kubecost Assets API",
 				labelNames, nil,
 			)
+
 			ch <- prometheus.MustNewConstMetric(
 				diskDesc, prometheus.GaugeValue, disk.TotalCost, labelValues...,
 			)
@@ -89,6 +102,8 @@ func (ScrapeAssets) generateDisksMetrics(disks *[]kubecost_api.CloudAssetDisk, a
 	}
 	return nil
 }
+
+
 
 func (ScrapeAssets) generateCloudMetrics(clouds *[]kubecost_api.CloudAssetCloud, assetsMapper *CloudAssets, ch chan<- prometheus.Metric, logger log.Logger) error {
 	if len(*clouds) > 0 {
